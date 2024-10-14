@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
 	"time"
 
-	"github.com/google/go-github/v39/github"
-	"github.com/pkg/errors"
+	"github.com/google/go-github/v66/github"
+	"github.com/hashicorp/go-version"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -38,8 +39,8 @@ func (g *GHR) CreateRelease(ctx context.Context, req *github.RepositoryRelease, 
 	// If release is not found, then create a new release.
 	release, err := g.GitHub.GetRelease(ctx, *req.TagName)
 	if err != nil {
-		if err != ErrReleaseNotFound {
-			return nil, errors.Wrap(err, "failed to get release")
+		if !errors.Is(err, ErrReleaseNotFound) {
+			return nil, fmt.Errorf("failed to get release: %w", err)
 		}
 		Debugf("Release (with tag %s) not found: create a new one",
 			*req.TagName)
@@ -74,11 +75,35 @@ func (g *GHR) CreateRelease(ctx context.Context, req *github.RepositoryRelease, 
 	return g.GitHub.CreateRelease(ctx, req)
 }
 
+func (g *GHR) GetLatestRelease(ctx context.Context) (*github.RepositoryRelease, error) {
+	release, err := g.GitHub.GetLatestRelease(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to fetch latest Github release: %w", err)
+	}
+	return release, err
+}
+
+func (g *GHR) IsNewerSemverRelease(newRelease *github.RepositoryRelease, latestRelease *github.RepositoryRelease) (bool, error) {
+	newReleaseVer, error := version.NewVersion(*newRelease.TagName)
+	if error != nil {
+		return false, fmt.Errorf("Unable to parse new release version as semver%s: %w", *newRelease.TagName, error)
+	}
+	latestReleaseVer, error := version.NewVersion(*latestRelease.TagName)
+	if error != nil {
+		return false, fmt.Errorf("Unable to parse latest release version as semver %s: %w", *newRelease.TagName, error)
+	}
+
+	if latestReleaseVer.LessThan(newReleaseVer) {
+		return true, nil
+	}
+	return false, nil
+}
+
 // DeleteRelease removes an existing release, if it exists. If it does not exist,
 // DeleteRelease returns an error
-func (g *GHR) DeleteRelease(ctx context.Context, ID int64, tag string) error {
+func (g *GHR) DeleteRelease(ctx context.Context, releaseID int64, tag string) error {
 
-	err := g.GitHub.DeleteRelease(ctx, ID)
+	err := g.GitHub.DeleteRelease(ctx, releaseID)
 	if err != nil {
 		return err
 	}
@@ -115,15 +140,14 @@ func (g *GHR) UploadAssets(ctx context.Context, releaseID int64, localAssets []s
 			fmt.Fprintf(g.outStream, "--> Uploading: %15s\n", filepath.Base(localAsset))
 			_, err := g.GitHub.UploadAsset(ctx, releaseID, localAsset)
 			if err != nil {
-				return errors.Wrapf(err,
-					"failed to upload asset: %s", localAsset)
+				return fmt.Errorf("failed to upload asset: %s %w", localAsset, err)
 			}
 			return nil
 		})
 	}
 
 	if err := eg.Wait(); err != nil {
-		return errors.Wrap(err, "one of the goroutines failed")
+		return fmt.Errorf("one of the goroutines failed: %w", err)
 	}
 
 	return nil
@@ -140,7 +164,7 @@ func (g *GHR) DeleteAssets(ctx context.Context, releaseID int64, localAssets []s
 
 	assets, err := g.GitHub.ListAssets(ctx, releaseID)
 	if err != nil {
-		return errors.Wrap(err, "failed to list assets")
+		return fmt.Errorf("failed to list assets: %w", err)
 	}
 
 	semaphore := make(chan struct{}, parallel)
@@ -159,8 +183,7 @@ func (g *GHR) DeleteAssets(ctx context.Context, releaseID int64, localAssets []s
 
 					fmt.Fprintf(g.outStream, "--> Deleting: %15s\n", *asset.Name)
 					if err := g.GitHub.DeleteAsset(ctx, *asset.ID); err != nil {
-						return errors.Wrapf(err,
-							"failed to delete asset: %s", *asset.Name)
+						return fmt.Errorf("failed to delete asset: %s %w", *asset.Name, err)
 					}
 					return nil
 				})
@@ -169,7 +192,7 @@ func (g *GHR) DeleteAssets(ctx context.Context, releaseID int64, localAssets []s
 	}
 
 	if err := eg.Wait(); err != nil {
-		return errors.Wrap(err, "one of the goroutines failed")
+		return fmt.Errorf("one of the goroutines failed: %w", err)
 	}
 
 	return nil

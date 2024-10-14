@@ -2,20 +2,20 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v39/github"
+	"github.com/google/go-github/v66/github"
 )
 
 func TestGHR_CreateRelease(t *testing.T) {
 	t.Parallel()
 
 	githubClient := testGithubClient(t)
-	GHR := &GHR{
+	ghr := &GHR{
 		GitHub:    githubClient,
-		outStream: ioutil.Discard,
+		outStream: io.Discard,
 	}
 
 	testTag := "create-release"
@@ -26,21 +26,57 @@ func TestGHR_CreateRelease(t *testing.T) {
 	}
 
 	recreate := false
-	release, err := GHR.CreateRelease(context.TODO(), req, recreate)
+	release, err := ghr.CreateRelease(context.TODO(), req, recreate)
 	if err != nil {
 		t.Fatal("CreateRelease failed:", err)
 	}
 
-	defer GHR.DeleteRelease(context.TODO(), *release.ID, testTag)
+	defer ghr.DeleteRelease(context.TODO(), *release.ID, testTag)
+}
+
+func TestGHR_GetLatestRelease(t *testing.T) {
+	t.Parallel()
+
+	githubClient := testGithubClient(t)
+	ghr := &GHR{
+		GitHub:    githubClient,
+		outStream: io.Discard,
+	}
+
+	testTag := "v1.2.3"
+
+	existingReq := &github.RepositoryRelease{
+		TagName:    github.String(testTag),
+		Draft:      github.Bool(false),
+		MakeLatest: github.String("true"),
+	}
+
+	newRelease, err := githubClient.CreateRelease(context.TODO(), existingReq)
+	if err != nil {
+		t.Fatalf("CreateRelease failed: %s", err)
+	}
+
+	// Create an existing release before
+	existing, err := ghr.GetLatestRelease(context.TODO())
+	if err != nil {
+		t.Fatalf("GetLatestRelease failed: %s", err)
+	}
+
+	if newRelease.Name != existing.Name {
+		t.Fatalf("GetLatestRelease got release %s instead of release %s", *existing.Name, *newRelease.Name)
+	}
+
+	defer ghr.DeleteRelease(context.TODO(), *existing.ID, testTag)
+
 }
 
 func TestGHR_CreateReleaseWithExistingRelease(t *testing.T) {
 	t.Parallel()
 
 	githubClient := testGithubClient(t)
-	GHR := &GHR{
+	ghr := &GHR{
 		GitHub:    githubClient,
-		outStream: ioutil.Discard,
+		outStream: io.Discard,
 	}
 
 	testTag := "create-with-existing"
@@ -105,14 +141,14 @@ func TestGHR_CreateReleaseWithExistingRelease(t *testing.T) {
 		}
 
 		// Create a release for THIS TEST
-		created, err := GHR.CreateRelease(context.TODO(), tc.request, tc.recreate)
+		created, err := ghr.CreateRelease(context.TODO(), tc.request, tc.recreate)
 		if err != nil {
 			t.Fatalf("#%d GHR.CreateRelease failed: %s", i, err)
 		}
 
 		// Clean up existing release
 		if !tc.recreate {
-			err = GHR.DeleteRelease(context.TODO(), *existing.ID, *existingReq.TagName)
+			err = ghr.DeleteRelease(context.TODO(), *existing.ID, *existingReq.TagName)
 			if err != nil {
 				t.Fatalf("#%d GHR.DeleteRelease (existing) failed: %s", i, err)
 			}
@@ -134,7 +170,7 @@ func TestGHR_CreateReleaseWithExistingRelease(t *testing.T) {
 				t.Fatalf("#%d GitHub.DeleteRelease (created) failed: %s", i, err)
 			}
 		} else {
-			err := GHR.DeleteRelease(context.TODO(), *created.ID, *tc.request.TagName)
+			err := ghr.DeleteRelease(context.TODO(), *created.ID, *tc.request.TagName)
 			if err != nil {
 				t.Fatalf("#%d GHR.DeleteRelease (created) failed: %s", i, err)
 			}
@@ -149,9 +185,9 @@ func TestGHR_CreateReleaseWithExistingRelease(t *testing.T) {
 
 func TestGHR_UploadAssets(t *testing.T) {
 	githubClient := testGithubClient(t)
-	GHR := &GHR{
+	ghr := &GHR{
 		GitHub:    githubClient,
-		outStream: ioutil.Discard,
+		outStream: io.Discard,
 	}
 
 	testTag := "ghr-upload-assets"
@@ -177,7 +213,7 @@ func TestGHR_UploadAssets(t *testing.T) {
 		t.Fatal("LocalAssets failed:", err)
 	}
 
-	if err := GHR.UploadAssets(context.TODO(), *release.ID, localTestAssets, 4); err != nil {
+	if err := ghr.UploadAssets(context.TODO(), *release.ID, localTestAssets, 4); err != nil {
 		t.Fatal("GHR.UploadAssets failed:", err)
 	}
 
@@ -192,7 +228,7 @@ func TestGHR_UploadAssets(t *testing.T) {
 
 	// Delete all assets
 	parallel := 4
-	if err := GHR.DeleteAssets(context.TODO(), *release.ID, localTestAssets, parallel); err != nil {
+	if err := ghr.DeleteAssets(context.TODO(), *release.ID, localTestAssets, parallel); err != nil {
 		t.Fatal("GHR.DeleteAssets failed:", err)
 	}
 

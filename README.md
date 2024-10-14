@@ -1,14 +1,15 @@
 ghr
 ====
 
-[![GitHub release](http://img.shields.io/github/release/tcnksm/ghr.svg?style=flat-square)][release]
-[![Travis](https://img.shields.io/travis/tcnksm/ghr.svg?style=flat-square)](https://travis-ci.org/tcnksm/ghr)
-[![Go Documentation](http://img.shields.io/badge/go-documentation-blue.svg?style=flat-square)][godocs]
-[![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)][license]
+[![GitHub release](https://img.shields.io/github/release/tcnksm/ghr.svg?style=flat-square)][release]
+[![Test](https://github.com/tcnksm/ghr/actions/workflows/test.yml/badge.svg)][GitHub Actions]
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/tcnksm/ghr)][PkgGoDev]
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)][license]
 
 [release]: https://github.com/tcnksm/ghr/releases
+[GitHub Actions]: https://github.com/tcnksm/ghr/actions/workflows/test.yml
 [license]: https://github.com/tcnksm/ghr/blob/master/LICENSE
-[godocs]: http://godoc.org/github.com/tcnksm/ghr
+[PkgGoDev]: https://pkg.go.dev/github.com/tcnksm/ghr
 
 `ghr` creates GitHub Release and uploads artifacts in parallel.
 
@@ -89,7 +90,7 @@ $ ghr \
     -b BODY \         # Set text describing the contents of the release
     -p NUM \          # Set amount of parallelism (Default is number of CPU)
     -delete \         # Delete release and its git tag in advance if it exists (same as -recreate)
-    -replace          # Replace artifacts if it is already uploaded
+    -replace \        # Replace artifacts if it is already uploaded
     -draft \          # Release as draft (Unpublish)
     -soft \           # Stop uploading if the same tag already exists
     -prerelease \     # Create prerelease
@@ -99,7 +100,7 @@ $ ghr \
 
 ## Install
 
-If you are OSX user, you can use [Homebrew](http://brew.sh/):
+If you are a macOS user, you can use [Homebrew](https://brew.sh/):
 
 ```bash
 $ brew install ghr
@@ -107,10 +108,10 @@ $ brew install ghr
 
 If you are on another platform, you can download a binary from our [release page](https://github.com/tcnksm/ghr/releases) and place it in `$PATH` directory.
 
-Or you can use `go get` (you need to use go1.7 or later),
+Or you can use `go install`.
 
 ```bash
-$ go get -u github.com/tcnksm/ghr
+$ go install github.com/tcnksm/ghr@latest
 ```
 
 ## VS.
@@ -121,7 +122,7 @@ $ go get -u github.com/tcnksm/ghr
 
 GitHub added the ability to automatically generate the body of a Release based on a format specified in
 `.github/release.yml` in Oct 2021. You can read more about that format [here](https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes#configuring-automatically-generated-release-notes).
-ghr now has the `-generatenotes` flag to enable that content to be programmatically added instead of manually suppling the body.
+ghr now has the `-generatenotes` flag to enable that content to be programmatically added instead of manually supplying the body.
 
 ## Contribution
 

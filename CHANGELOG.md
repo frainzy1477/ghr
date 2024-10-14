@@ -1,5 +1,28 @@
 # Changelog
 
+## [v0.17.0](https://github.com/tcnksm/ghr/compare/v0.16.2...v0.17.0) - 2024-10-14
+- Add -latest flag to specify latest release or not by @danudey in https://github.com/tcnksm/ghr/pull/152
+- Bump google.golang.org/protobuf from 1.28.1 to 1.33.0 by @dependabot in https://github.com/tcnksm/ghr/pull/158
+- Bump golang.org/x/net from 0.17.0 to 0.23.0 by @dependabot in https://github.com/tcnksm/ghr/pull/160
+- Bump github.com/cloudflare/circl from 1.3.3 to 1.3.7 by @dependabot in https://github.com/tcnksm/ghr/pull/161
+- update deps and go version by @Songmu in https://github.com/tcnksm/ghr/pull/162
+
+## [v0.16.2](https://github.com/tcnksm/ghr/compare/v0.16.1...v0.16.2) - 2023-10-16
+- disable cgo. fixes #154. by @shogo82148 in https://github.com/tcnksm/ghr/pull/155
+
+## [v0.16.1](https://github.com/tcnksm/ghr/compare/v0.16.0...v0.16.1) - 2023-10-12
+- drop pkg/errors dependency by @Songmu in https://github.com/tcnksm/ghr/pull/148
+- Miscellaneous fixes: coding convention fixes and some typo fixes by @itchyny in https://github.com/tcnksm/ghr/pull/149
+- Bump golang.org/x/net from 0.0.0-20220923203811-8be639271d50 to 0.7.0 by @dependabot in https://github.com/tcnksm/ghr/pull/150
+- Bump golang.org/x/net from 0.7.0 to 0.17.0 by @dependabot in https://github.com/tcnksm/ghr/pull/153
+
+## [v0.16.0](https://github.com/tcnksm/ghr/compare/v0.15.0...v0.16.0) - 2022-09-26
+- introduce modern releng stack by @Songmu in https://github.com/tcnksm/ghr/pull/141
+- Go 1.19 and update deps by @Songmu in https://github.com/tcnksm/ghr/pull/143
+- update go-github to v47 by @Songmu in https://github.com/tcnksm/ghr/pull/144
+- add freebsd and arm64 to built artifacts by @Songmu in https://github.com/tcnksm/ghr/pull/145
+- find a draft release before creating new one by @Songmu in https://github.com/tcnksm/ghr/pull/146
+
 ## [v0.15.0](https://github.com/tcnksm/ghr/compare/v0.14.0...v0.15.0) (2022-08-17)
 
 * Allow to use Generate Release Notes function of GitHub [#138](https://github.com/tcnksm/ghr/pull/138) ([neilgierman](https://github.com/neilgierman))
